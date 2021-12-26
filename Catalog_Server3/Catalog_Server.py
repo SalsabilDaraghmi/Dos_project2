@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow.fields import Integer
 from marshmallow import Schema
-
+import requests
 #init app
 app = Flask(__name__)
 #init marshmallow
@@ -34,6 +34,10 @@ class Catalog_Server_DB(db.Model):
         self.topic=topic
 #dectionary
 book={}
+catlog1="192.168.1.60:3000"
+catlog2="192.168.1.60:4000"
+catlog3="192.168.1.60:5000"
+front  ="192.168.1.84:5000"
 
 #==================== frontend operations   =====================================================
 
@@ -78,6 +82,12 @@ def update_book_price(bookID):
         book['price']=getbook.price
         book['quantity']=getbook.quantity
         result = json.dumps(book,indent=5)
+        requests.put("http://"+catlog2+"/update_price_/"+str(bookID),data={'price':price})
+        requests.put("http://"+catlog1+"/update_price_/"+str(bookID),data={'price':price})
+
+        requests.delete("http://"+front+"/invalidate/"+str(bookID))
+
+
         return (result)
     else:
         return jsonify({bookID: "this id does not exist please try another id"})
@@ -92,7 +102,11 @@ def increase_book_quantity(bookID):
         new_amount = int(request.form.get('new_amount'))
         getbook.quantity = getbook.quantity + new_amount 
         db.session.commit()
+        requests.put("http://"+catlog2+"/increase_quantity_/"+str(bookID),data={'new_amount':new_amount})
+        requests.put("http://"+catlog1+"/increase_quantity_/"+str(bookID),data={'new_amount':new_amount})
+        requests.delete("http://"+front+"/invalidate/"+str(bookID))
         return jsonify({"msg" : f"increaseing number of book '{getbook.title}' done succesfully. old quantity is {getbook.quantity-new_amount}, and the new quantity is {getbook.quantity}"})
+
     else:
         return jsonify({bookID: "this id does not exist please try another id"})
 
@@ -109,11 +123,64 @@ def decrease_book_quantity(bookID):
         else :
             getbook.quantity = x
             db.session.commit()
+        requests.put("http://"+catlog2+"/decrease_quantity_/"+str(bookID),data={'new_amount':new_amount})
+        requests.put("http://"+catlog1+"/decrease_quantity_/"+str(bookID),data={'new_amount':new_amount})
+        requests.delete("http://"+front+"/invalidate/"+str(bookID))
+        
         return jsonify({"msg" : f"decreaseing number of book : '{getbook.title}' done succesfully. old quantity is {getbook.quantity+new_amount}, and the new quantity is {getbook.quantity}"})
     else:  return jsonify({bookID : "this id does not exist"})
 
 
 
+#==================== decrease quantity ==============================================
+@app.route("/decrease_quantity_/<bookID>",methods=['PUT'])
+def decrease_book_quantity_(bookID):
+    getbook = Catalog_Server_DB.query.get(bookID)
+    if getbook:
+        new_amount = int(request.form.get('new_amount'))
+        x= getbook.quantity - new_amount 
+        if x < 0:
+            return jsonify({"msg":f"no books enough ,the number of remaining books is {getbook.quantity}"})
+        else :
+            getbook.quantity = x
+            db.session.commit()
+        return jsonify({"msg" : f"decreaseing number of book : '{getbook.title}' done succesfully. old quantity is {getbook.quantity+new_amount}, and the new quantity is {getbook.quantity}"})
+    else:  return jsonify({bookID : "this id does not exist"})
+
+
+@app.route("/increase_quantity_/<bookID>",methods=['PUT'])
+def increase_book_quantity_(bookID):
+    getbook = Catalog_Server_DB.query.get(bookID)
+    if getbook:
+        new_amount = int(request.form.get('new_amount'))
+        getbook.quantity = getbook.quantity + new_amount 
+        db.session.commit()
+        return jsonify({"msg" : f"increaseing number of book '{getbook.title}' done succesfully. old quantity is {getbook.quantity-new_amount}, and the new quantity is {getbook.quantity}"})
+
+    else:
+        return jsonify({bookID: "this id does not exist please try another id"})
+
+
+@app.route("/update_price_/<bookID>",methods=['PUT'])
+def update_book_price_(bookID):
+    getbook = Catalog_Server_DB.query.get(bookID)
+    if getbook:
+        price = request.form.get('price') #get the price that read in frontend
+        getbook.price = price 
+        db.session.commit() #commit the update IN DATABASE
+        book={}
+        book['id']=getbook.id
+        book['title']=getbook.title
+        book['topic']=getbook.topic
+        book['price']=getbook.price
+        book['quantity']=getbook.quantity
+        result = json.dumps(book,indent=5)
+
+        return (result)
+    else:
+        return jsonify({bookID: "this id does not exist please try another id"})
+
 #=====================================================
 if __name__ == '___main__':
+    app.run(debug=True)
     app.run(debug=True)
