@@ -12,13 +12,13 @@ load_balanc_catalog=0
 #==============================================================================================
 #============================ Catalog server requests ===========================================
 #==============================================================================================
-catalog1="192.168.1.60:3000"
-catalog2="192.168.1.60:4000"
-catalog3="192.168.1.60:5000"
-cache="192.168.1.84:2000"
-order1="192.168.1.50:3000"
-order2="192.168.1.50:4000"
-order3="192.168.1.50:5000"
+catalog1="172.19.2.60:3000"
+catalog2="172.19.2.60:4000"
+# catalog3="172.19.2.60:5000"
+cache="172.19.2.182:2000"
+order1="172.19.2.50:3000"
+order2="172.19.2.50:4000"
+# order3="172.19.2.50:5000"
 # 172.19.19.157  
 #============================= 1- search operation ====================================
 #getting the books info which have the topic s_topic #request to catalogServer
@@ -37,12 +37,12 @@ def search(topic): # this function for response
             result = requests.get("http://"+catalog1+"/search/"+str(topic)) # send request to catalog_server1
             
         elif load_balanc_catalog == 1:
-            load_balanc_catalog += 1
+            load_balanc_catalog = 0
             result = requests.get("http://"+catalog2+"/search/"+str(topic)) # send request to catalog_server1
             
-        elif load_balanc_catalog == 2:
-            load_balanc_catalog = 0
-            result = requests.get("http://"+catalog3+"/search/"+str(topic)) # send request to catalog_server1
+        # elif load_balanc_catalog == 2:
+        #     load_balanc_catalog = 0
+        #     result = requests.get("http://"+catalog3+"/search/"+str(topic)) # send request to catalog_server1
             
         catRes=result.json()
         # dectCat=json.loads(catRes)
@@ -76,12 +76,12 @@ def get_info(bookID):
           result = requests.get("http://"+catalog1+"/info/"+str(bookID)) # send request to catalog_server1
           
       elif load_balanc_catalog == 1:
-          load_balanc_catalog += 1
+          load_balanc_catalog =0
           result = requests.get("http://"+catalog2+"/info/"+str(bookID)) # send request to catalog_server2
           
-      elif load_balanc_catalog == 2:
-          load_balanc_catalog = 0
-          result = requests.get("http://"+catalog3+"/info/"+str(bookID)) # send request to catalog_server3
+    #   elif load_balanc_catalog == 2:
+    #       load_balanc_catalog = 0
+    #       result = requests.get("http://"+catalog3+"/info/"+str(bookID)) # send request to catalog_server3
           
       res=result.json()
       resul =requests.post("http://"+cache+"/addBook/",data={'id':bookID,'title':res.get('title'),'price':res.get('price'),'quantity':res.get('quantity'),'topic':res.get('topic')})
@@ -106,11 +106,11 @@ def update_book_price(bookID):
             load_balanc_catalog += 1
             result = requests.put("http://"+catalog1+"/update_price/"+str(bookID),data={'price':price}) # send request to catalog_server1
     elif load_balanc_catalog == 1:
-        load_balanc_catalog += 1
-        result = requests.put("http://"+catalog2+"/update_price/"+str(bookID),data={'price':price}) # send request to catalog_server2
-    elif load_balanc_catalog == 2:
         load_balanc_catalog = 0
-        result = requests.put("http://"+catalog3+"/update_price/"+str(bookID),data={'price':price}) # send request to catalog_server3
+        result = requests.put("http://"+catalog2+"/update_price/"+str(bookID),data={'price':price}) # send request to catalog_server2
+    # elif load_balanc_catalog == 2:
+    #     load_balanc_catalog = 0
+    #     result = requests.put("http://"+catalog3+"/update_price/"+str(bookID),data={'price':price}) # send request to catalog_server3
     
     return (result.content)
 
@@ -127,11 +127,11 @@ def increase_book_quantity(bookID):
             load_balanc_catalog += 1
             result = requests.put("http://"+catalog1+"/increase_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server1
     elif load_balanc_catalog == 1:
-        load_balanc_catalog += 1
-        result = requests.put("http://"+catalog2+"/increase_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server2
-    elif load_balanc_catalog == 2:
         load_balanc_catalog = 0
-        result = requests.put("http://"+catalog3+"/increase_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server3
+        result = requests.put("http://"+catalog2+"/increase_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server2
+    # elif load_balanc_catalog == 2:
+    #     load_balanc_catalog = 0
+    #     result = requests.put("http://"+catalog3+"/increase_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server3
 
     return(result.content)
 
@@ -146,11 +146,11 @@ def decrease_book_quantity(bookID):
             load_balanc_catalog += 1
             result = requests.put("http://"+catalog1+"/decrease_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server1
     elif load_balanc_catalog == 1:
-        load_balanc_catalog += 1
-        result = requests.put("http://"+catalog2+"/decrease_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server2
-    elif load_balanc_catalog == 2:
         load_balanc_catalog = 0
-        result = requests.put("http://"+catalog3+"/decrease_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server3
+        result = requests.put("http://"+catalog2+"/decrease_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server2
+    # elif load_balanc_catalog == 2:
+    #     load_balanc_catalog = 0
+    #     result = requests.put("http://"+catalog3+"/decrease_quantity/"+str(bookID),data={'new_amount':new_amount}) # send request to catalog_server3
 
     return(result.content)
 
@@ -170,9 +170,9 @@ def purchase(bookID):
     elif load_balanc_catalog == 1:
         load_balanc_order += 1
         result = requests.get("http://"+order2+"/purchase/"+str(bookID)) # send request to catalog_server2
-    elif load_balanc_catalog == 2:
-        load_balanc_order = 0
-        result = requests.get("http://"+order3+"/purchase/"+str(bookID)) # send request to catalog_server3
+    # elif load_balanc_order== 2:
+    #     load_balanc_order = 0
+    #     result = requests.get("http://"+order3+"/purchase/"+str(bookID)) # send request to catalog_server3
 
     return(result.content)
 
