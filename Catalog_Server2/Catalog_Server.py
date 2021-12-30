@@ -34,11 +34,14 @@ class Catalog_Server_DB(db.Model):
         self.topic=topic
 #dectionary
 book={}
-catlog1="192.168.1.60:3000"
-catlog2="192.168.1.60:4000"
-catlog3="192.168.1.60:5000"
-front  ="192.168.1.84:5000"
-
+#catlog1="172.19.2.60:3000"
+#catlog2="172.19.2.60:4000"
+#catlog3="172.19.2.60:5000"
+#front  ="172.19.2.182:5000"
+catlog1="172.19.77.60:3000"
+catlog2="172.19.77.60:4000"
+#catlog3="172.19.2.60:5000"
+front  ="172.19.77.125:5000"
 #==================== frontend operations   =====================================================
 
 #==================== 1- search operation =====================================
@@ -83,7 +86,7 @@ def update_book_price(bookID):
         book['quantity']=getbook.quantity
         result = json.dumps(book,indent=5)
         requests.put("http://"+catlog1+"/update_price_/"+str(bookID),data={'price':price})
-        requests.put("http://"+catlog3+"/update_price_/"+str(bookID),data={'price':price})
+        #requests.put("http://"+catlog3+"/update_price_/"+str(bookID),data={'price':price})
 
         requests.delete("http://"+front+"/invalidate/"+str(bookID))
 
@@ -91,7 +94,6 @@ def update_book_price(bookID):
         return (result)
     else:
         return jsonify({bookID: "this id does not exist please try another id"})
-
 
 #==================== 4- update quantity ==============================================
 
@@ -104,7 +106,7 @@ def increase_book_quantity(bookID):
         getbook.quantity = getbook.quantity + new_amount 
         db.session.commit()
         requests.put("http://"+catlog1+"/increase_quantity_/"+str(bookID),data={'new_amount':new_amount})
-        requests.put("http://"+catlog3+"/increase_quantity_/"+str(bookID),data={'new_amount':new_amount})
+        #requests.put("http://"+catlog3+"/increase_quantity_/"+str(bookID),data={'new_amount':new_amount})
         requests.delete("http://"+front+"/invalidate/"+str(bookID))
         return jsonify({"msg" : f"increaseing number of book '{getbook.title}' done succesfully. old quantity is {getbook.quantity-new_amount}, and the new quantity is {getbook.quantity}"})
 
@@ -125,14 +127,15 @@ def decrease_book_quantity(bookID):
             getbook.quantity = x
             db.session.commit()
         requests.put("http://"+catlog1+"/decrease_quantity_/"+str(bookID),data={'new_amount':new_amount})
-        requests.put("http://"+catlog3+"/decrease_quantity_/"+str(bookID),data={'new_amount':new_amount})
+        #requests.put("http://"+catlog3+"/decrease_quantity_/"+str(bookID),data={'new_amount':new_amount})
         requests.delete("http://"+front+"/invalidate/"+str(bookID))
         
         return jsonify({"msg" : f"decreaseing number of book : '{getbook.title}' done succesfully. old quantity is {getbook.quantity+new_amount}, and the new quantity is {getbook.quantity}"})
     else:  return jsonify({bookID : "this id does not exist"})
 
-#==================== decrease quantity ==============================================
 
+
+#==================== decrease quantity ==============================================
 @app.route("/decrease_quantity_/<bookID>",methods=['PUT'])
 def decrease_book_quantity_(bookID):
     getbook = Catalog_Server_DB.query.get(bookID)
@@ -148,7 +151,6 @@ def decrease_book_quantity_(bookID):
     else:  return jsonify({bookID : "this id does not exist"})
 
 
-
 @app.route("/increase_quantity_/<bookID>",methods=['PUT'])
 def increase_book_quantity_(bookID):
     getbook = Catalog_Server_DB.query.get(bookID)
@@ -160,7 +162,6 @@ def increase_book_quantity_(bookID):
 
     else:
         return jsonify({bookID: "this id does not exist please try another id"})
-
 
 
 @app.route("/update_price_/<bookID>",methods=['PUT'])
@@ -181,7 +182,6 @@ def update_book_price_(bookID):
         return (result)
     else:
         return jsonify({bookID: "this id does not exist please try another id"})
-
 
 
 #=====================================================
