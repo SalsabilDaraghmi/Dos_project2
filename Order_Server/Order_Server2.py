@@ -16,9 +16,22 @@ app = Flask(__name__)
 ############################### purchase ####################################
 # if client send purchase with a specific book_id
 #order server send to catalog server
+catalog1="172.19.2.60:3000"
+catalog2="172.19.2.60:4000"
+catalog3="172.19.2.60:5000"
+load_balance_catalog=0
 @app.route('/purchase/<int:bookID>', methods=['PUT'])
 def purchase_book(bookID):
-    result=requests.put("http://192.168.1.60:5000/decrease_quantity/"+str(bookID),{'new_amount':1})
+    global load_balance_catalog
+    if load_balance_catalog==0:
+        load_balance_catalog+=1
+        result=requests.put("http://"+catalog1+"/decrease_quantity/"+str(bookID),{'new_amount':1})
+    if load_balance_catalog==1:
+        load_balance_catalog+=1
+        result=requests.put("http://"+catalog2+"/decrease_quantity/"+str(bookID),{'new_amount':1})
+    if load_balance_catalog==2:
+        load_balance_catalog=0
+        result=requests.put("http://"+catalog3+"/decrease_quantity/"+str(bookID),{'new_amount':1})
     x=result.json()
     msg= str(x.get('msg'))
     print(msg,end=' , ')
@@ -27,8 +40,18 @@ def purchase_book(bookID):
         print("hi")
         return(result.content)
     else: 
+        global load_balance_catalog
+        result2=''
         print("noo")
-        result2=requests.get("http://192.168.1.60:5000/info/"+str(bookID))
+        if load_balance_catalog==0:
+            load_balance_catalog+=1
+            result2=requests.put("http://"+catalog1+"/info/"+str(bookID))
+        if load_balance_catalog==1:
+            load_balance_catalog+=1
+            result2=requests.put("http://"+catalog2+"/info/"+str(bookID))
+        if load_balance_catalog==2:
+            load_balance_catalog=10
+            result2=requests.put("http://"+catalog3+"/info/"+str(bookID))
         info=result2.json()
         return {"msg":f"bought book '{info.get('title')}'"}
       
